@@ -31,7 +31,9 @@ if($getclsnsysi+1 > $getmaxcalisan) {
 $query = mysqli_query($conn,"SELECT * FROM users WHERE username = '$getusername'");
 $result = $query->fetch_assoc();
 $workid = $result['work'];
-if($workid != "" || $workid != "yok") {
+if($workid != "") {
+echo "Zaten bir işin bulunuyor! Önce ondan çıkış yapmalısın.";
+} else {
 $getdate = date("M/d/Y");
 $sqlis = "UPDATE users SET work = '$getworkid' WHERE username = '$getusername'";
 $run_queryis = mysqli_query($conn, $sqlis);
@@ -51,12 +53,7 @@ if($run_queryis && $run_queryis2) {
     header("Location: kullanciportal/");
 } else {
     echo "Bir hata oluştu!";
-}
-
-} else {
-    echo "Zaten bir işin bulunuyor! Önce ondan çıkış yapmalısın.";
-}
-}
-};
+}}
+}};
 
 ?>
