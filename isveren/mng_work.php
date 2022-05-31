@@ -149,10 +149,9 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
               </div>
             </div>
           </div>
-        </div><div class="page-wrapper">
+        </div>
+    <div class="page-wrapper">
         <div class="container-xl">
-              <div class="col-12">
-                    <div class="row row-cards">
                       <div class="col-xl-6">
                         <div class="row row-cards">
                           <div class="col-12">
@@ -165,8 +164,52 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                               </div>
                             </div>
                           </div>
-                        </div>
-                    </div>
+                          <br>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Çalışan Listesi</h3>
+                    <div class="col-md-6">
+                    <div class="table-responsive">
+                    <table
+		class="table table-vcenter card-table">
+                      <thead>
+                        <tr>
+                          <th>İsim</th>
+                          <th>Katılma Tarihi</th>
+                          <th class="w-1"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        
+                        <?php
+                        $sql = "SELECT * FROM users";
+                        $query = mysqli_query($conn, $sql);
+
+                        while($row = mysqli_fetch_assoc($query)){
+                            $userwork = $row['work'];
+                            $useruname = $row['username'];
+                            $finduworkgirisdate = $row['workgirisdate'];
+                            if($userwork == $getworkid) {
+                                echo "<tr>
+                          <td>$useruname</td>
+                          <td class=\"text-muted\" ><a href=\"#\" class=\"text-reset\">$finduworkgirisdate</a></td>
+                          <td>
+                            <a href=\"#\">Kov(Yakında)</a>
+                          </td>
+                        </tr>";
+                            }
+                        }
+                        ?>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
         <footer class="footer footer-transparent d-print-none">
           <div class="container-xl">
             <div class="row text-center align-items-center flex-row-reverse">
