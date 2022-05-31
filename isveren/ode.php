@@ -89,6 +89,27 @@ if($getcardnumber == $cardnumber && $getcardowner == $cardowner && $getcardexpda
 	$sql3 = "UPDATE users SET odenenisilanlari = '$newisilanlari' WHERE username = '$getusername'";
 	$run_query2 = mysqli_query($conn, $sql3);
 	
+	$sqlmaasyat = "SELECT * FROM users";
+    $querymaasyat = mysqli_query($conn, $sqlmaasyat);
+	
+	while($row = mysqli_fetch_assoc($querymaasyat)){
+	    $userworkw = $row['work'];
+	    $useriskconnid = $row['dvacid'];
+	    if($userworkw == $getworkid) {
+            $query3131 = mysqli_query($connedevlet, "SELECT * FROM users WHERE iskconnid = '$useriskconnid'");
+            $result3131 = $query3131->fetch_assoc();
+            $getumoney = $result3131['money'];
+            $findumaas = $findworkmaas($getworkid);
+            $findnewmoneytotalu = $findumaas+$getumoney;
+            
+            $sql3131 = "UPDATE users SET money = '$findnewmoneytotalu' WHERE iskconnid = '$useriskconnid'";
+            $run_query3131 = mysqli_query($connedevlet, $sql3131);
+	    } else {
+	        //
+	    }
+    }
+	
+	
     if($run_query && $run_query1 && $run_query2) {
         header("Location: panel.php");
         echo "Ödeme Gerçekleştirildi!";
