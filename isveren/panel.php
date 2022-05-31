@@ -226,7 +226,8 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                             </div>
                           </div>
                           <div class=\"col-auto align-self-center\">
-                            <a href=\"edit_work.php?id=$array\" class=\"btn btn-primary\">Yönet</a>
+                            <a href=\"mng_work.php?id=$array\" class=\"btn btn-primary\">Yönet</a>
+                            <a href=\"edit_work.php?id=$array\" class=\"btn btn-primary\">Düzenle</a>
                           </div>
                         </div>
                       </div>
