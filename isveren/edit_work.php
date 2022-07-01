@@ -21,7 +21,30 @@ if(!strstr($isilanlari, "$getworkid")) {
 if (isset($_POST['submit'])) {
 $uploaddir = '../workphotos/';
 $uploadfile = $uploaddir . "$getworkid.png";
-move_uploaded_file($_FILES['workphoto']['tmp_name'], $uploadfile);
+$target_file = $uploaddir . basename($_FILES["workphoto"]["name"]);
+$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+$check = getimagesize($_FILES["workphoto"]["tmp_name"]);
+	
+if($check !== false) {
+  $uploadOk = 1;
+} else {
+  echo "Yüklemeye çalıştığınız dosya bir resim değil.";
+  $uploadOk = 0;
+}
+if($imageFileType != "png") {
+  echo "Üzgünüm, sadece PNG formatları desteklenmektedir.";
+  $uploadOk = 0;
+}
+
+if ($uploadOk == 0) {
+    //
+} else {
+  if (move_uploaded_file($_FILES["workphoto"]["tmp_name"], $uploadfile)) {
+    //
+  } else {
+    echo "İş fotoğrafı yüklenirken bir hata oluştu.";
+  }
+}
 $datao = file_get_contents('../works.json');
 $json_arro = json_decode($datao, true);
 foreach ($json_arro as $keyo => $valueo) {
@@ -272,7 +295,10 @@ file_put_contents('../works.json', json_encode($json_arrob));
                     </form>
                     <form enctype="multipart/form-data" action="" method="POST">
                     <div class="form-footer">
-                      <button name="sil" type="submit" class="btn btn-red">İlanı Sil(Bu işlemden sonra bütün işçileriniz ve ilan komple silinecektir)</button>
+                      <button name="sil" type="submit" class="btn btn-red">İlanı Sil</button>
+                      <small class="form-hint">
+                          Bu işlemden sonra bütün işçileriniz ve ilan komple silinecektir.
+                      </small>
                     </div>
                     <div class="form-footer">
                       <button name="kapat" type="submit" class="btn btn-primary">İlanı Başvurulara Kapat</button>
