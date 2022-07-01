@@ -23,9 +23,34 @@ if (isset($_POST['submit'])) {
     }
     $sql31 = "UPDATE users SET isilanlari = '$newisilanlari' WHERE username = '$getusername'";
     $run_query1 = mysqli_query($conn, $sql31);
+
     $uploaddir = '../workphotos/';
 	$uploadfile = $uploaddir . "$gnrterandomilanid.png";
-	move_uploaded_file($_FILES['workphoto']['tmp_name'], $uploadfile);
+	$target_file = $uploaddir . basename($_FILES["workphoto"]["name"]);
+	$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+	$check = getimagesize($_FILES["workphoto"]["tmp_name"]);
+	
+if($check !== false) {
+  $uploadOk = 1;
+} else {
+  echo "Yüklemeye çalıştığınız dosya bir resim değil.";
+  $uploadOk = 0;
+}
+if($imageFileType != "png") {
+  echo "Üzgünüm, sadece PNG formatları desteklenmektedir.";
+  $uploadOk = 0;
+}
+
+if ($uploadOk == 0) {
+    //
+} else {
+  if (move_uploaded_file($_FILES["workphoto"]["tmp_name"], $uploadfile)) {
+    //
+  } else {
+    echo "İş fotoğrafı yüklenirken bir hata oluştu.";
+  }
+}
+	
     function fileWriteAppend(){
 		$current_data = file_get_contents('../works.json');
 		$array_data = json_decode($current_data, true);
