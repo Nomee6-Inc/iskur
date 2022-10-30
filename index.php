@@ -1,3 +1,12 @@
+<?php
+session_start();
+include "config.php";
+$getusername = $_SESSION['user_id'];
+$works_query = $db->query("SELECT * FROM works",PDO::FETCH_ASSOC);
+$works_q_query = $works_query->fetch(PDO::FETCH_ASSOC);
+$work_count = $works_query->rowCount();
+?>
+
 <!DOCTYPE html>
 <html lang="tr">
   <head>
@@ -8,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
-    <title>NOMEE6 İŞKUR</title>
+    <title>Nomee6 İşkur</title>
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/fontawesome.css">
     <link rel="stylesheet" href="assets/css/templatemo-seo-dream.css">
@@ -18,15 +27,13 @@
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -85,9 +92,7 @@
                     <div class="info-stat">
                       <h6>İş Sayısı:</h6>
                       <h4><?php
-                      $jsonworks = file_get_contents("works.json");
-                      $worksarray = json_decode($jsonworks);
-                      echo count($worksarray);
+                      echo $work_count;
                       ?></h4>
                     </div>
                   </div>
