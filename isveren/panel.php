@@ -2,49 +2,14 @@
 session_start();
 date_default_timezone_set('Europe/Istanbul');
 include '../config.php';
-$getusername = $_SESSION['username'];
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+$getuserid = $_SESSION['user_id'];
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../kullanciportal/login.php");
+} else {
+$user_q = $db->query("SELECT * FROM users WHERE user_id = '{$getuserid}'",PDO::FETCH_ASSOC);
+$user_q_query = $user_q->fetch(PDO::FETCH_ASSOC);
+
 }
-
-$result = mysqli_query($conn, "SELECT * FROM employee");
-$query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$getusername'");
-$result = $query->fetch_assoc();
-
-$odenenisilanlari = $result['odenenisilanlari'];
-$odenenisilanlariarray = explode(",", $odenenisilanlari);
-
-$isilanlari = $result['isilanlari'];
-$isilanlariarray = explode(",", $isilanlari);
-
-$jsonitems = file_get_contents("../works.json");
-$objitemss = json_decode($jsonitems);
-
-$findworkname = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->name;
-    }
-};
-$findworkphoto = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->photo;
-    }
-};
-$findworkmaasgun = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->maasgun;
-    }
-};
-$findworkmaas = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->maas;
-    }
-};
-$findworkclsnsayisi = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->calisansayisi;
-    }
-};
 ?>
 
 <!doctype html>
@@ -53,7 +18,7 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>İşveren Portalı | NOMEE6 İŞKUR</title>
+    <title>İşveren Portalı | Nomee6 İşkur</title>
     <link href="../dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-payments.min.css" rel="stylesheet"/>
@@ -64,15 +29,13 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -99,10 +62,10 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu Temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık Temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
@@ -169,32 +132,18 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                <div class="col-12">
                  <div class="card">
                     <div class="card-body">
-                        <h3 class="card-title">Maaş Ödemelerim</h3>
-                        <?php
-                        foreach($isilanlariarray as $array) {
-                            $getworknames = $findworkname($array);
-                            $getworkphotos = $findworkphoto($array);
-                            $getworkmaasgun = $findworkmaasgun($array);
-                            $gettotalmaas = $findworkclsnsayisi($array)*$findworkmaas($array);
-                            if($getworkmaasgun == date("d") && !strstr($odenenisilanlari, "$array")) {
-                            echo "<div>
-                                  <div class=\"row\">
-                                    <div class=\"col-auto\">
-                                      <span class=\"avatar\" style=\"background-image: url(../workphotos/$getworkphotos)\"></span>
-                                    </div>
-                                    <div class=\"col\">
-                                      <div class=\"text-truncate\">
-                                        $getworknames
-                                      </div>
-                                    </div>
-                                    <div class=\"col-auto align-self-center\">
-                                      <a href=\"ode.php?id=$array\" class=\"btn btn-primary\">Öde(₺$gettotalmaas)</a>
-                                    </div>
-                                  </div>
-                                </div>
-                                <br>";
-                        }}
-                        ?>
+                        <h3 class="card-title">Bakiye</h3>
+						<div class="col-sm-6 col-lg-3">
+            			    <div class="card">
+            			      <div class="card-body">
+            			        <div class="d-flex align-items-center">
+            			        </div>
+            			        <div class="h1 mb-3"><?php echo $user_q_query['balance']; ?>₺</div>
+								  <small>Aylık maaş ödemelerinizin otomatik olarak gerçekleşmesi için bakiye eklemelisiniz.</small>
+            			      </div>
+								<a class="btn btn-blue" href="add-funds.php">Bakiye Ekle</a>
+            			    </div>
+						</div>
                     </div>
                 </div>
                 <br>
@@ -212,27 +161,30 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                         </div>
                         <br>
                         <?php
-                        foreach($isilanlariarray as $array) {
-                            $getworknames = $findworkname($array);
-                            $getworkphotos = $findworkphoto($array);
-                            echo "<div>
+						$sql = "SELECT * FROM works WHERE workowner = '$getuserid'";
+             			$result = mysqli_query($conn, $sql);
+             			while($row = mysqli_fetch_array($result)){
+						$get_workthumbnail = $row['workthumbnail'];
+						$get_workname = $row['workname'];
+						$get_workid = $row['workid'];
+						echo "<div>
                         <div class=\"row\">
                           <div class=\"col-auto\">
-                            <span class=\"avatar\" style=\"background-image: url(../workphotos/$getworkphotos)\"></span>
+                            <span class=\"avatar\" style=\"background-image: url(../workphotos/$get_workthumbnail)\"></span>
                           </div>
                           <div class=\"col\">
                             <div class=\"text-truncate\">
-                              $getworknames
+                              $get_workname
                             </div>
                           </div>
                           <div class=\"col-auto align-self-center\">
-                            <a href=\"mng_work.php?id=$array\" class=\"btn btn-primary\">Yönet</a>
-                            <a href=\"edit_work.php?id=$array\" class=\"btn btn-primary\">Düzenle</a>
+                            <a href=\"mng_work.php?id=$get_workid\" class=\"btn btn-primary\">Yönet</a>
+                            <a href=\"edit_work.php?id=$get_workid\" class=\"btn btn-primary\">Düzenle</a>
                           </div>
                         </div>
                       </div>
                       <br>";
-                        }
+						}
                         ?>
                     </div>
                     </div>
@@ -262,13 +214,9 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                 </ul>
               </div>
             </div>
-          </div>
         </footer>
       </div>
     </div>
-    <script src="../dist/libs/apexcharts/dist/apexcharts.min.js"></script>
-    <script src="../dist/libs/jsvectormap/dist/js/jsvectormap.min.js"></script>
-    <script src="../dist/libs/jsvectormap/dist/maps/world.js"></script>
     <script src="../dist/js/tabler.min.js"></script>
     <script src="../dist/js/demo.min.js"></script>
   </body>
