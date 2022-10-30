@@ -1,36 +1,25 @@
 <?php
 session_start();
 include '../config.php';
-$getusername = $_SESSION['username'];
-if (!isset($_SESSION['username'])) {
+$get_user_id = $_SESSION['user_id'];
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
+} else {
+$worker_q = $db->query("SELECT * FROM workers WHERE user_id = '{$get_user_id}' AND status = 'active'",PDO::FETCH_ASSOC);
+$worker_q_query = $worker_q->fetch(PDO::FETCH_ASSOC);
+$worker_q_count = $worker_q -> rowCount();
+
+$get_work_id = $worker_q_query['work_id'];
+$get_work_join_date = $worker_q_query['join_date'];
+
+$work_q = $db->query("SELECT * FROM works WHERE workid = '{$get_work_id}'",PDO::FETCH_ASSOC);
+$work_q_query = $work_q->fetch(PDO::FETCH_ASSOC);
+$get_work_name = $work_q_query['workname'];
+$get_work_earn_date = $work_q_query['earndate'];
+$get_work_earn = $work_q_query['earn'];
+$get_work_id = $work_q_query['workid'];
+
 }
-
-$result = mysqli_query($conn, "SELECT * FROM employee");
-$query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$getusername'");
-$result = $query->fetch_assoc();
-
-$work = $result['work'];
-$workgirisdate = $result['workgirisdate'];
-
-$jsonitems = file_get_contents("../works.json");
-
-$objitemss = json_decode($jsonitems);
-$findworkname = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->name;
-    }
-};
-$findworkmaas = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->maas;
-    }
-};
-$findworkmaasgun = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->maasgun;
-    }
-};
 ?>
 
 <!doctype html>
@@ -39,7 +28,7 @@ $findworkmaasgun = function($id) use ($objitemss) {
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>Kullanıcı Paneli | NOMEE6 İŞKUR</title>
+    <title>Kullanıcı Paneli | Nomee6 İşkur</title>
     <link href="../dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-payments.min.css" rel="stylesheet"/>
@@ -50,15 +39,13 @@ $findworkmaasgun = function($id) use ($objitemss) {
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -85,10 +72,10 @@ $findworkmaasgun = function($id) use ($objitemss) {
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
@@ -141,7 +128,7 @@ $findworkmaasgun = function($id) use ($objitemss) {
             <div class="row align-items-center">
               <div class="col">
                 <div class="page-pretitle">
-                  NOMEE6 İŞKUR
+                  Nomee6 İşkur
                 </div>
                 <h2 class="page-title">
                   Kullanıcı Paneli
@@ -158,19 +145,22 @@ $findworkmaasgun = function($id) use ($objitemss) {
                         <h3 class="card-title">Çalışma Durumu</h3>
                             <p>
                                 <?php
-                                if($work == "") {
-                                    echo "<div class=\"text-yellow\">Herhangi bir işe katılmamışsınız.</div>";
+                                if($worker_q_count > 0) {
+                                    echo "<div class=\"text-success\">$get_work_name adlı işte çalışıyorsunuz.</div>";
+                                    echo "<div class=\"text-success\">İşe Başlama Tarihi: $get_work_join_date</div>";
                                 } else {
-                                    $getuserworkname = $findworkname($work);
-                                    echo "<div class=\"text-success\">$getuserworkname adlı işte çalışıyorsunuz.</div>";
-                                    echo "<div class=\"text-success\">İşe Başlama Tarihi: $workgirisdate</div>";
+									echo "<div class=\"text-yellow\">Herhangi bir işe katılmamışsınız.</div>";
                                 }
                                 
                                 ?></p>
                         </div>
-                        <div class="card-footer">
-                            <a href="istenayril.php" class="btn btn-red">İşten Ayrıl</a>
-                        </div>
+					 	<?php
+					 	if($worker_q_count > 0) {
+                        	echo "<div class=\"card-footer\">
+                            <a href=\"istenayril.php\" class=\"btn btn-red\">İşten Ayrıl</a>
+                        </div>";
+                        }
+					 	?>
                     </div>
                 </div>
                 <br>
@@ -180,23 +170,19 @@ $findworkmaasgun = function($id) use ($objitemss) {
                         <h3 class="card-title">İş Detayları</h3>
                             <p>
                                 <?php
-                                if($work == "") {
-                                    echo "<div class=\"text-yellow\">Herhangi bir işe katılmamışsınız.</div>";
+                                if($worker_q_count > 0) {
+                                    echo "<div class=\"text-success\">$get_work_earn ₺/Ay</div>";
+                                    echo "<div class=\"text-success\">Her ayın $get_work_earn_date. günü</div>";
                                 } else {
-                                    $getuserworkmaas = $findworkmaas($work);
-                                    $getuserworkmaasgun = $findworkmaasgun($work);
-                                    echo "<div class=\"text-success\">$getuserworkmaas ₺/Ay</div>";
-                                    echo "<div class=\"text-success\">Her ayın $getuserworkmaasgun. günü</div>";
+                                    echo "<div class=\"text-yellow\">Herhangi bir işe katılmamışsınız.</div>";
                                 }
                                 
                                 ?></p>
                             <?php
-                            if(!$work || $work == "") {
-                                //
-                            } else {
-                            echo "
+                            if($worker_q_count > 0) {
+                                echo "
                             <div class=\"card-footer\">
-                                <a href=\"../view_work.php?id=$work\" class=\"btn btn-primary\">Çalıştığın işin ilanını Görüntüle</a>
+                                <a href=\"../view_work.php?id=$get_work_id\" class=\"btn btn-primary\">Çalıştığın işin ilanını Görüntüle</a>
                             </div>
                             ";
                             }
@@ -229,13 +215,9 @@ $findworkmaasgun = function($id) use ($objitemss) {
                 </ul>
               </div>
             </div>
-          </div>
         </footer>
       </div>
     </div>
-    <script src="../dist/libs/apexcharts/dist/apexcharts.min.js"></script>
-    <script src="../dist/libs/jsvectormap/dist/js/jsvectormap.min.js"></script>
-    <script src="../dist/libs/jsvectormap/dist/maps/world.js"></script>
     <script src="../dist/js/tabler.min.js"></script>
     <script src="../dist/js/demo.min.js"></script>
   </body>
