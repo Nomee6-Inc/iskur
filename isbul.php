@@ -1,9 +1,6 @@
 <?php
-header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
-header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
+session_start();
+include "config.php";
 ?>
 <!doctype html>
 <html lang="tr">
@@ -11,7 +8,7 @@ header("Pragma: no-cache");
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>İŞ BUL | NOMEE6 İŞKUR</title>
+    <title>İş Bul | Nomee6 İşkur</title>
     <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
@@ -22,15 +19,13 @@ header("Pragma: no-cache");
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -57,10 +52,10 @@ header("Pragma: no-cache");
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu Temaya Geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık Temaya Geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
@@ -124,38 +119,31 @@ header("Pragma: no-cache");
         </div>
         <div class="page-body">
            <div class="container-xl">
-            <div id="isler" class="row row-cards">
-            <script>
-                $(document).ready(function () {
-                    $.getJSON("./works.json", 
-                        function (data) {
-                        var student = '';
-                        $.each(data, function (key, value) {
-                            student += '<div class=\"col-sm-6 col-lg-4\">';
-                            student += '<div class=\"card card-sm\">';
-                            student += '<a href="view_work.php?id='+value.id+'" class="d-block"><img src="workphotos/'+value.photo+'" class="card-img-top"></a>'
-  
-                            student += '<div class="card-body">'
-  
-                            student += '<div class="d-flex align-items-center">'
-  
-                            student += '<div>'
-                            student += '<div>'+value.name+'</div>';
-                            student += '<h class="text">'
-                            student += '<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" /><path d="M12 3v3m0 12v3" /></svg>'
-                            student += value.maas
-                            student += '</h>'
-                            student += '</div>'
-                            student += '</div>'
-                            student += '</div>'
-                            student += '</div>'
-                            student += '</div>'
-                        });
-
-                        $('#isler').append(student);
-                    });
-                });
-            </script>
+            <div class="row row-cards">
+				<?php
+			$sql = "SELECT * FROM works";
+             		$result = mysqli_query($conn, $sql);
+             		while($row = mysqli_fetch_array($result)){
+						$workid = $row['workid'];
+						$workthumbnail = $row['workthumbnail'];
+						$workname = $row['workname'];
+						$workearn = $row['earn'];
+			 			echo "<div class=\"col-sm-6 col-lg-4\">
+						<div class=\"card card-sm\">
+						<a href=\"view_work.php?id=$workid\" class=\"d-block\"><img src=\"workphotos/$workthumbnail\" class=\"card-img-top\"></a>
+						<div class=\"card-body\">
+						<div class=\"d-flex align-items-center\">
+						<div>
+						<div>$workname</div>
+						<h class=\"text\">".'<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" /><path d="M12 3v3m0 12v3" /></svg>'."$workearn
+						</h>
+						</div>
+						</div>
+						</div>
+						</div>
+						</div>";
+			 		}
+				?>
 			</div>
         </div>
         <footer class="footer footer-transparent d-print-none">
