@@ -1,36 +1,27 @@
 <?php
 session_start();
 include '../config.php';
-$getusername = $_SESSION['username'];
+$getuserid = $_SESSION['user_id'];
 $getworkid = $_GET['id'];
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../kullanciportal/login.php");
+} else {
+$work_q = $db->query("SELECT * FROM works WHERE workid = '{$getworkid}'",PDO::FETCH_ASSOC);
+$work_q_query = $work_q->fetch(PDO::FETCH_ASSOC);
+$_get_work_owner = $work_q_query['workowner'];
+$_get_work_workname = $work_q_query['workname'];
+
+$workers_q = $db->query("SELECT * FROM workers WHERE work_id = '{$getworkid}' AND status = 'active'",PDO::FETCH_ASSOC);
+$workers_q_query = $workers_q->fetch(PDO::FETCH_ASSOC);
+$get_work_workers_count = $workers_q -> rowCount();
+	
+if($_get_work_owner == $getuserid) {
+	
+} else {
+	header("Location: panel.php");
 }
 
-$result = mysqli_query($conn, "SELECT * FROM employee");
-$query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$getusername'");
-$result = $query->fetch_assoc();
-
-$isilanlari = $result['isilanlari'];
-$isilanlariarray = explode(",", $isilanlari);
-
-if(!strstr($isilanlari, "$getworkid")) {
-    header("Location: panel.php");
 }
-
-$jsonitems = file_get_contents("../works.json");
-$objitemss = json_decode($jsonitems);
-
-$findworkname = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->name;
-    }
-};
-$findworkclsnsayisi = function($id) use ($objitemss) {
-    foreach ($objitemss as $role) {
-        if ($role->id == $id) return $role->calisansayisi;
-    }
-};
 ?>
 
 <!doctype html>
@@ -39,7 +30,7 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>İşveren Portalı | NOMEE6 İŞKUR</title>
+    <title>İşveren Portalı | Nomee6 İşkur</title>
     <link href="../dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-payments.min.css" rel="stylesheet"/>
@@ -50,15 +41,13 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -85,10 +74,10 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
@@ -158,9 +147,9 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                             <div class="card">
                               </div>
                               <div class="card-footer">
-                                  İlan İsmi: <?php echo $findworkname($getworkid); ?><br>
+                                  İlan İsmi: <?php echo $_get_work_workname; ?><br>
                                   
-                                  Çalışan Sayısı: <?php echo $findworkclsnsayisi($getworkid); ?>
+                                  Çalışan Sayısı: <?php echo $get_work_workers_count; ?>
                               </div>
                             </div>
                           </div>
@@ -169,7 +158,6 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
             <div class="card">
                 <div class="card-body">
                     <h3 class="card-title">Çalışan Listesi</h3>
-                    <div class="col-md-6">
                     <div class="table-responsive">
                     <table
 		class="table table-vcenter card-table">
@@ -181,24 +169,22 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                         </tr>
                       </thead>
                       <tbody>
-                        
                         <?php
-                        $sql = "SELECT * FROM users";
+                        $sql = "SELECT * FROM workers WHERE work_id = '$getworkid' AND status = 'active'";
                         $query = mysqli_query($conn, $sql);
 
                         while($row = mysqli_fetch_assoc($query)){
-                            $userwork = $row['work'];
-                            $useruname = $row['username'];
-                            $finduworkgirisdate = $row['workgirisdate'];
-                            if($userwork == $getworkid) {
+                            $get_worker_user__id = $row['user_id'];
+                            $finduworkjoindate = $row['join_date'];
+							
+							$_get_user_name_api = get_userid_username($get_worker_user__id);
                                 echo "<tr>
-                          <td>$useruname</td>
-                          <td class=\"text-muted\" ><a href=\"#\" class=\"text-reset\">$finduworkgirisdate</a></td>
+                          <td>$_get_user_name_api</td>
+                          <td class=\"text-muted\" ><a href=\"#\" class=\"text-reset\">$finduworkjoindate</a></td>
                           <td>
                             <a href=\"#\">Kov(Yakında)</a>
                           </td>
                         </tr>";
-                            }
                         }
                         ?>
                       </tbody>
@@ -207,7 +193,6 @@ $findworkclsnsayisi = function($id) use ($objitemss) {
                 </div>
               </div>
             </div>
-        </div>
     </div>
 </div>
         <footer class="footer footer-transparent d-print-none">
