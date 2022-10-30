@@ -1,35 +1,80 @@
 <?php
+session_start();
+include "config.php";
+$getuserid = $_SESSION['user_id'];
 $getworkid = $_GET['id'];
-if(!$getworkid) {
-    header("Location: isbul.php");
+
+function getnowDate(){
+$gun=date("d");
+$ay=date("m")-1;
+$yil=date("Y");
+$aylar=Array("Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık");
+$get_clock = date("H:i");
+return "$gun $aylar[$ay] $yil, $get_clock";
 }
-$jsonitem = file_get_contents("./works.json");
-$objitems = json_decode($jsonitem);
-$findworkname = function($id) use ($objitems) {
-    foreach ($objitems as $name) {
-        if ($name->id == $id) return $name->name;
-     }
-    };
-$findworkdesc = function($id) use ($objitems) {
-    foreach ($objitems as $name) {
-        if ($name->id == $id) return $name->desc;
-     }
-    };
-$findworkphoto = function($id) use ($objitems) {
-    foreach ($objitems as $name) {
-        if ($name->id == $id) return $name->photo;
-     }
-    };
-$findworkmaas = function($id) use ($objitems) {
-    foreach ($objitems as $name) {
-        if ($name->id == $id) return $name->maas;
-    }
-};
-$findworkfirma = function($id) use ($objitems) {
-    foreach ($objitems as $name) {
-        if ($name->id == $id) return $name->firma;
-    }
-};
+
+$user_q = $db->query("SELECT * FROM users WHERE user_id = '{$getuserid}'",PDO::FETCH_ASSOC);
+$user_q_query = $user_q->fetch(PDO::FETCH_ASSOC);
+$user_q_count = $user_q -> rowCount();
+
+if($user_q_count < 0 || $user_q_count == 0) {
+	session_destroy();
+}
+
+$work_q = $db->query("SELECT * FROM works WHERE workid = '{$getworkid}'",PDO::FETCH_ASSOC);
+$work_q_query = $work_q->fetch(PDO::FETCH_ASSOC);
+$work_q_count = $work_q -> rowCount();
+
+$workers_q = $db->query("SELECT * FROM workers WHERE work_id = '{$getworkid}' AND status = 'active'",PDO::FETCH_ASSOC);
+$workers_q_query = $workers_q->fetch(PDO::FETCH_ASSOC);
+
+$getworkworkers = $workers_q -> rowCount();
+
+if($work_q_count > 0) {
+$getworkname = $work_q_query['workname'];
+$getworkthumbnail = $work_q_query['workthumbnail'];
+$getworkdesc = $work_q_query['workdesc'];
+$getworkearn = $work_q_query['earn'];
+$getworkcompany = $work_q_query['workcompany'];
+$getworkmaxworker = $work_q_query['maxworkers'];
+
+if(isset($_POST['joinwork'])) {
+$_user_worker_q = $db->query("SELECT * FROM workers WHERE user_id = '{$getuserid}' AND status = 'active'",PDO::FETCH_ASSOC);
+$_user_worker_q_query = $_user_worker_q->fetch(PDO::FETCH_ASSOC);
+$_user_worker_q_count = $_user_worker_q -> rowCount();
+	
+	if(!isset($_SESSION['user_id'])) {
+		header("Location: kullanciportal/login.php");
+	} else {
+		if($getworkworkers+1 > $getworkmaxworker) {
+			echo "<script>alert(\"Bu iş başvurulara kapanmış veya maksimum çalışan sayısına ulaşmıştır.\")</script>";
+		} else {
+			if($_user_worker_q_count > 0) {
+				echo "<script>alert(\"Zaten bir işin bulunuyor! Önce işinden ayrılmalısın.\")</script>";
+			} else {
+				$_get_now_date = getnowDate();
+				$_join_work_q = $db->prepare("INSERT INTO workers SET
+						user_id = ?,
+						work_id = ?,
+						join_date = ?,
+						status = ?,
+						leave_date = ?");
+				$_join_work_q_query = $_join_work_q->execute(array(
+				     $getuserid, $getworkid, $_get_now_date, "active", $_get_now_date
+				));
+				if($_join_work_q_query) {
+					header("Location: kullanciportal/");
+				} else {
+					echo "<script>alert(\"Bir hata oluştu.\")</script>";
+				}
+			}
+		}
+	}
+}
+	
+} else {
+	header("Location: isbul.php");
+}
 ?>
 
 <!doctype html>
@@ -38,26 +83,24 @@ $findworkfirma = function($id) use ($objitems) {
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>İŞ BUL | NOMEE6 İŞKUR</title>
+    <title><?php echo $getworkname; ?> | Nomee6 İşkur</title>
     <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
     <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
     <link href="./dist/css/demo.min.css" rel="stylesheet"/>
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <meta property="og:title" content="NOMEE6 İŞKUR" />
+    <meta property="og:title" content="<?php echo $getworkname; ?>" />
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
-    <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
+    <meta property="og:image" content="https://iskur.nomee6.xyz/workphotos/<?php echo $getworkthumbnail; ?>" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -84,10 +127,10 @@ $findworkfirma = function($id) use ($objitems) {
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
@@ -140,7 +183,7 @@ $findworkfirma = function($id) use ($objitems) {
             <div class="row align-items-center">
               <div class="col">
                 <div class="page-pretitle">
-                  NOMEE6 İŞKUR
+                  Nomee6 İşkur
                 </div>
                 <h2 class="page-title">
                   İş Görüntüle
@@ -154,19 +197,19 @@ $findworkfirma = function($id) use ($objitems) {
             <div class="col-12">
             <div class="col-xl-6">
                 <div class="card">
-                    <div class="card-img-top img-responsive img-responsive-16by9" style="background-image: url(./workphotos/<?php echo $findworkphoto($getworkid); ?>)"></div>
+                    <div class="card-img-top img-responsive img-responsive-16by9" style="background-image: url(./workphotos/<?php echo $getworkthumbnail; ?>)"></div>
                     <div class="card-body">
-                    <h3 class="card-title"><?php echo $findworkname($getworkid); ?></h3>
+                    <h3 class="card-title"><?php echo $getworkname; ?></h3>
                     <h3>İş Ayrıntıları:</h3>
-                    <p><?php echo $findworkdesc($getworkid); ?></p>
+                    <p><?php echo $getworkdesc; ?></p>
                     <h3>Aylık Maaş:</h3>
-                    <p><?php echo $findworkmaas($getworkid); ?>₺</p>
+                    <p><?php echo $getworkearn; ?>₺</p>
                     <h3>İşveren Firma:</h3>
-                    <p><?php echo $findworkfirma($getworkid); ?></p>
+                    <p><?php echo $getworkcompany; ?></p>
                 </div>
-                <div class="card-footer">
-                    <a href="isekatil.php?id=<?php echo $getworkid; ?>" class="btn btn-primary">İşe Katıl</a>
-                </div>
+                <form class="card-footer" method="POST" action="">
+                    <button name="joinwork" class="btn btn-primary">İşe Katıl</button>
+                </form>
             </div>
 		</div>
     </div>
