@@ -1,34 +1,19 @@
 <?php
 session_start();
+$_get_user_id = $_SESSION['user_id'];
 include '../config.php';
-$getusername = $_SESSION['username'];
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-}
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../kullanciportal/login.php");
+} else {
 
-$result = mysqli_query($conn, "SELECT * FROM employee");
-$query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$getusername'");
-$result = $query->fetch_assoc();
-
-$isilanlari = $result['isilanlari'];
-$isilanlariarray = explode(",", $isilanlari);
-
-$gnrterandomilanid = rand(1000, 9999);
+$gnrterandomilanid = rand(100000, 999999);
 
 if (isset($_POST['submit'])) {
-    if(!$isilanlari || $isilanlari == "") {
-        $newisilanlari = $gnrterandomilanid;
-    } else {
-        $newisilanlari = "$isilanlari,$gnrterandomilanid";
-    }
-    $sql31 = "UPDATE users SET isilanlari = '$newisilanlari' WHERE username = '$getusername'";
-    $run_query1 = mysqli_query($conn, $sql31);
-
-    $uploaddir = '../workphotos/';
-	$uploadfile = $uploaddir . "$gnrterandomilanid.png";
-	$target_file = $uploaddir . basename($_FILES["workphoto"]["name"]);
-	$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
-	$check = getimagesize($_FILES["workphoto"]["tmp_name"]);
+$uploaddir = '../workphotos/';
+$uploadfile = $uploaddir . "$gnrterandomilanid.png";
+$target_file = $uploaddir . basename($_FILES["workphoto"]["name"]);
+$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+$check = getimagesize($_FILES["workphoto"]["tmp_name"]);
 	
 if($check !== false) {
   $uploadOk = 1;
@@ -50,35 +35,42 @@ if ($uploadOk == 0) {
     echo "İş fotoğrafı yüklenirken bir hata oluştu.";
   }
 }
-	
-    function fileWriteAppend(){
-		$current_data = file_get_contents('../works.json');
-		$array_data = json_decode($current_data, true);
-		global $gnrterandomilanid;
-		$extra = array(
-		'id'               =>     $gnrterandomilanid,
-		'name'               =>     $_POST['workname'],
-		'desc'               =>     $_POST['workdesc'],
-		'photo'               =>     "$gnrterandomilanid.png",
-		'maas'               =>     $_POST['maas'],
-		'firma'               =>     $_POST['firmaname'],
-		'calisansayisi'       =>     0,
-		'maasgun'               =>     $_POST['maasgun'],
-		'maxcalisan'               =>     $_POST['maxcalisan'],
-		);
-		$array_data[] = $extra;
-		$final_data = json_encode($array_data);
-		return $final_data;
+$get_work_name = htmlentities($_POST['workname']);
+$get_work_desc = htmlentities($_POST['workdesc']);
+$get_work_maas = $_POST['maas'];
+$get_work_firmaname = htmlentities($_POST['firmaname']);
+$get_work_maasgun = $_POST['maasgun'];
+$get_work_maxcalisan = $_POST['maxcalisan'];
+if(is_numeric($get_work_maxcalisan) && is_numeric($get_work_maasgun) && is_numeric($get_work_maas)) {
+$get_work_desc = str_replace("&lt;br&gt;","<br>",$get_work_desc);	
+
+$save_work_q_p = $db->prepare("INSERT INTO works SET
+workname = ?,
+workid = ?,
+workdesc = ?,
+workthumbnail = ?,
+earn = ?,
+workcompany = ?,
+maxworkers = ?,
+workowner = ?,
+earndate = ?
+");
+$save_work_q_p_query = $save_work_q_p->execute(array(
+     $get_work_name, $gnrterandomilanid, $get_work_desc, "$gnrterandomilanid.png", $get_work_maas, $get_work_firmaname, $get_work_maxcalisan, $_get_user_id, $get_work_maasgun
+));	
+if($save_work_q_p_query) {
+	header("Refresh:1 url=panel.php");
+	echo "<script>alert(\"İşlem başarılı\")</script>";
+} else {
+	echo "<script>alert(\"Bir hata oluştu!\")</script>";
 }
-if(file_exists("../works.json"))
-{
-     $final_data=fileWriteAppend();
-     if(file_put_contents("../works.json", $final_data))
-     {
-          $message = "success";
-     }
+} else {
+	echo "<script>alert(\"Girdiğiniz bilgiler geçersiz!\")</script>";
+}
+	
 };
-};
+	
+}
 ?>
 
 <!doctype html>
@@ -87,7 +79,7 @@ if(file_exists("../works.json"))
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>İşveren Portalı | NOMEE6 İŞKUR</title>
+    <title>İş İlanı Oluştur | Nomee6 İşkur</title>
     <link href="../dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-payments.min.css" rel="stylesheet"/>
@@ -98,15 +90,13 @@ if(file_exists("../works.json"))
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -133,10 +123,10 @@ if(file_exists("../works.json"))
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
