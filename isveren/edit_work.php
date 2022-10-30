@@ -1,23 +1,19 @@
 <?php
 session_start();
 include '../config.php';
-$getusername = $_SESSION['username'];
+$getuserid = $_SESSION['user_id'];
 $getworkid = $_GET['id'];
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-}
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../kullanciportal/login.php");
+} else {
+$work_q = $db->query("SELECT * FROM works WHERE workid = '{$getworkid}'",PDO::FETCH_ASSOC);
+$work_q_query = $work_q->fetch(PDO::FETCH_ASSOC);
+$_get_work_owner = $work_q_query['workowner'];
+$_get_work_db_id_ai = $work_q_query['id'];	
 
-$result = mysqli_query($conn, "SELECT * FROM employee");
-$query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$getusername'");
-$result = $query->fetch_assoc();
+if($_get_work_owner == $getuserid) {
 
-$isilanlari = $result['isilanlari'];
-$isilanlariarray = explode(",", $isilanlari);
-
-if(!strstr($isilanlari, "$getworkid")) {
-    header("Location: panel.php");
-}
-
+// UPDATE FUNCTION
 if (isset($_POST['submit'])) {
 $uploaddir = '../workphotos/';
 $uploadfile = $uploaddir . "$getworkid.png";
@@ -45,57 +41,77 @@ if ($uploadOk == 0) {
     echo "İş fotoğrafı yüklenirken bir hata oluştu.";
   }
 }
-$datao = file_get_contents('../works.json');
-$json_arro = json_decode($datao, true);
-foreach ($json_arro as $keyo => $valueo) {
-    if ($valueo['id'] == "$getworkid") {
-		$json_arro[$keyo]['name'] = $_POST['workname'];
-		$json_arro[$keyo]['desc'] = $_POST['workdesc'];
-		$json_arro[$keyo]['photo'] = "$getworkid.png";
-		$json_arro[$keyo]['maas'] = $_POST['maas'];
-		$json_arro[$keyo]['firma'] = $_POST['firmaname'];
-		$json_arro[$keyo]['maasgun'] = $_POST['maasgun'];
-		$json_arro[$keyo]['maxcalisan'] = $_POST['maxcalisan'];
-    }
-}
-file_put_contents('../works.json', json_encode($json_arro));
-header("Location: panel.php");
-};
+$get_new_workname = htmlentities($_POST['workname']);
+$get_new_workdesc = htmlentities($_POST['workdesc']);
+$get_new_earn = $_POST['maas'];
+$get_new_workcompany = htmlentities($_POST['firmaname']);
+$get_new_earndate = $_POST['maasgun'];
+$get_new_maxworkers = $_POST['maxcalisan'];
+if(is_numeric($get_new_maxworkers) && is_numeric($get_new_earndate) && is_numeric($get_new_earn)) {
+$get_new_workdesc = str_replace("&lt;br&gt;","<br>",$get_new_workdesc);
 
+$update_work_q = $db->prepare("UPDATE works SET
+		workname = :new_workname,
+		workdesc = :new_workdesc,
+		earn = :new_earn,
+		workcompany = :new_workcompany,
+		earndate = :new_earndate,
+		maxworkers = :new_maxworkers
+		WHERE workid = :workid");
+$update_work_q_query = $update_work_q->execute(array(
+     	"new_workname" => $get_new_workname,
+		"new_workdesc" => $get_new_workdesc,
+		"new_earn" => $get_new_earn,
+		"new_workcompany" => $get_new_workcompany,
+		"new_earndate" => $get_new_earndate,
+		"new_maxworkers" => $get_new_maxworkers,
+     	"workid" => $getworkid
+));
+if($update_work_q_query) {
+	header("Location: panel.php");
+} else {
+	echo "<script>alert(\"Bir hata oluştu!\")</script>";
+}
+} else {
+	echo "<script>alert(\"Girdiğiniz veriler geçersiz\")</script>";
+}
+};
+// UPDATE FUNCTION END
+// DELETE FUNCTION
 if (isset($_POST['sil'])) {
-    if(strstr($isilanlari, ",")) {
-        $deletenewisilanlari = str_replace(",$getworkid", "", $isilanlari);
-    } else {
-        $deletenewisilanlari = str_replace("$getworkid", "", $isilanlari);
-    }
-    $sql31 = "UPDATE users SET isilanlari = '$deletenewisilanlari' WHERE username = '$getusername'";
-    $run_query1 = mysqli_query($conn, $sql31);
-    $data = file_get_contents('../works.json');
-    $json_arr = json_decode($data, true);
+$delete_work_q = $db->prepare("DELETE FROM works WHERE id = :id");
+$delete_work_q_query = $delete_work_q->execute(array(
+   'id' => $_get_work_db_id_ai
+));
 
-    $arr_index = array();
-    foreach ($json_arr as $key => $value) {
-        if ($value['id'] == $getworkid) {
-            $arr_index[] = $key;
-        }
-    }
-    foreach ($arr_index as $i) {
-        unset($json_arr[$i]);
-    }
-    $json_arr = array_values($json_arr);
-    file_put_contents('../works.json', json_encode($json_arr));
-    header("Location: panel.php");
-};
-
-if (isset($_POST['kapat'])) {
-$dataob = file_get_contents('../works.json');
-$json_arrob = json_decode($dataob, true);
-foreach ($json_arrob as $keyob => $valueob) {
-    if ($valueob['id'] == "$getworkid") {
-		$json_arrob[$keyob]['maxcalisan'] = 0;
-    }
+if($delete_work_q_query) {
+	header("Location: panel.php");
+} else {
+	echo "<script>alert(\"Bir hata oluştu!\")</script>";
 }
-file_put_contents('../works.json', json_encode($json_arrob));
+}
+// DELETE FUNCTION END
+// CLOSE WORK AD FUNCTION
+if (isset($_POST['kapat'])) {
+$close_work_q = $db->prepare("UPDATE works SET
+		maxworkers = :new_maxworkers
+		WHERE workid = :workid");
+$close_work_q_query = $close_work_q->execute(array(
+		"new_maxworkers" => 0,
+     	"workid" => $getworkid
+));
+if($close_work_q_query) {
+	header("Location: panel.php");
+} else {
+	echo "<script>alert(\"Bir hata oluştu!\")</script>";
+}
+}
+// CLOSE WORK AD FUNCTION END
+
+	
+} else {
+	header("Location: panel.php");
+}
 }
 ?>
 
@@ -105,7 +121,7 @@ file_put_contents('../works.json', json_encode($json_arrob));
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>İşveren Portalı | NOMEE6 İŞKUR</title>
+    <title>İşveren Portalı | Nomee6 İşkur</title>
     <link href="../dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-flags.min.css" rel="stylesheet"/>
     <link href="../dist/css/tabler-payments.min.css" rel="stylesheet"/>
@@ -116,15 +132,13 @@ file_put_contents('../works.json', json_encode($json_arrob));
     <meta property="og:url" content="https://iskur.nomee6.xyz" />
     <meta property="og:image" content="https://nomee6.xyz/assets/A.png" />
     <meta property="og:description" content="İş mi arıyorsunuz? Hemen girin ve kolayca işinizi bulun." />
-	<?php 
-	$username = $_SESSION['username'];
+	<?php
 	echo("
 	<!-- Matomo -->
 	  <script>
 		var _paq = window._paq = window._paq || [];
 		_paq.push(['trackPageView']);
 		_paq.push(['enableLinkTracking']);
-		_paq.push(['setUserId', '$username']);
 		_paq.push(['enableHeartBeatTimer']);
 		(function() {
 			var u=\"https://matomo.aliyasin.org/\";
@@ -151,10 +165,10 @@ file_put_contents('../works.json', json_encode($json_arrob));
             </a>
           </h1>
           <div class="navbar-nav flex-row d-lg-none">
-            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Koyu temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
             </a>
-            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Açık temaya geç" data-bs-toggle="tooltip" data-bs-placement="bottom">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="4" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
             </a>
           </div>
@@ -306,7 +320,6 @@ file_put_contents('../works.json', json_encode($json_arrob));
                           Tekrar açmak istediğiniz zaman Maksimum çalışan sayısını güncelleyin.
                       </small>
                     </div>
-                </div>
                 </form>
               </div>
             </div>
@@ -337,13 +350,9 @@ file_put_contents('../works.json', json_encode($json_arrob));
                 </ul>
               </div>
             </div>
-          </div>
         </footer>
       </div>
     </div>
-    <script src="../dist/libs/apexcharts/dist/apexcharts.min.js"></script>
-    <script src="../dist/libs/jsvectormap/dist/js/jsvectormap.min.js"></script>
-    <script src="../dist/libs/jsvectormap/dist/maps/world.js"></script>
     <script src="../dist/js/tabler.min.js"></script>
     <script src="../dist/js/demo.min.js"></script>
   </body>
